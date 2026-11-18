@@ -4272,13 +4272,14 @@
     .gap-board {
       position: relative;
       display: grid;
-      /* 第三、四列标题更长，分给它们更多宽度，字号才能加大还不换行 */
+      /* 第三、四列标题更长，分给它们更多宽度 */
       grid-template-columns: 1fr 1fr 1fr 1.12fr;
       gap: 16px;
       align-items: start;
       margin-top: 34px;
     }
 
+    /* 白卡片四角圆角，顶部是平直色条，不再做箭头 */
     .gap-col {
       position: relative;
       min-width: 0;
@@ -4287,7 +4288,7 @@
       box-shadow: 0 14px 34px rgba(54, 29, 117, .08);
     }
 
-    /* 第一张是当前最需要先看的缺口，卡片和字号略放大 */
+    /* 第一张仍是当前先看的缺口 */
     .gap-col.is-focus {
       box-shadow: 0 18px 42px rgba(89, 39, 219, .18);
       outline: 1px solid rgba(89, 39, 219, .28);
@@ -4306,6 +4307,7 @@
       font-size: 16px
     }
 
+    /* 卡片头：左标题、右图标，上沿圆角，从左到右逐张略变浅 */
     .gap-head {
       display: flex;
       align-items: center;
@@ -4478,7 +4480,7 @@
       }
     }
 
-    /* 组织路径：斜切双栏。左 Path A、右 Path B，色条与字号对齐第二节 */
+    /* 组织路径：左侧虚线串起 1、2、3，三张方案卡从上到下 */
     #paths {
       background:
         radial-gradient(ellipse at 50% 0%, rgba(89, 39, 219, .07), transparent 42%),
@@ -4532,56 +4534,79 @@
       line-height: 1.85;
     }
 
+    /* 三张方案卡纵向排开，左侧用虚线把 1、2、3 串起来 */
     .route-board {
+      --route-gap: 28px;
+      --node: 48px;
+      --gutter: 22px;
+      --node-top: 22px;
       position: relative;
-      display: grid;
-      grid-template-columns: 1.08fr .92fr;
-      /* 标题、椭圆、介绍、卡片、四条说明各占一行，左右共用行高 */
-      grid-template-rows: repeat(8, auto);
-      align-items: stretch;
+      display: flex;
+      flex-direction: column;
+      gap: var(--route-gap);
       margin-top: 34px;
-      padding: 28px 0;
+      padding-left: calc(var(--node) + var(--gutter));
+      counter-reset: path;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .route-a,
+    .route-b,
+    .route-c {
+      position: relative;
+      z-index: 1;
+      display: block;
+      min-width: 0;
+      margin: 0;
+      padding: 22px 28px 24px;
       background: #fff;
       border-radius: 22px;
       box-shadow: 0 14px 34px rgba(54, 29, 117, .08);
-      overflow: hidden;
-      container-type: inline-size;
+      counter-increment: path;
     }
 
-    /* 整板斜切：Path B 一侧更浅，衬出更深的标题色条 */
-    .route-board::before {
+    /* 序号落在虚线节点上，白底盖住线段 */
+    .route-a::before,
+    .route-b::before,
+    .route-c::before {
+      content: counter(path);
+      position: absolute;
+      z-index: 1;
+      left: calc((var(--node) + var(--gutter)) * -1);
+      top: var(--node-top);
+      display: grid;
+      place-items: center;
+      width: var(--node);
+      height: var(--node);
+      border: 2px solid #5927db;
+      border-radius: 50%;
+      background: #fff;
+      color: #5927db;
+      font-family: var(--decor);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    /* 线段只连到下一张卡的序号，最后一张不再往下延 */
+    .route-a::after,
+    .route-b::after {
       content: "";
       position: absolute;
       z-index: 0;
-      inset: 0;
-      background: linear-gradient(108deg, #f3edff 0 50%, #fff 50% 51.4%, #f8f6ff 51.4% 100%);
+      left: calc((var(--node) + var(--gutter)) * -1 + var(--node) / 2 - 1px);
+      top: calc(var(--node-top) + var(--node));
+      bottom: calc((var(--route-gap) + var(--node-top)) * -1);
+      border-left: 2px dashed rgba(89, 39, 219, .42);
       pointer-events: none;
-    }
-
-    /* 左右共用整板的 8 行，对应内容同一高度、同一水平线 */
-    .route-a,
-    .route-b {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      grid-template-rows: subgrid;
-      grid-row: 1 / span 8;
-      min-width: 0;
-    }
-
-    .route-a {
-      grid-column: 1
-    }
-
-    .route-b {
-      grid-column: 2
     }
 
     /* 右上角推荐标，标明适合本公司的是 Path B */
     .route-pick {
       position: absolute;
-      top: -28px;
-      right: 22px;
+      top: 0;
+      right: 28px;
       z-index: 2;
       padding: 4px 14px 5px;
       border-radius: 0 0 12px 12px;
@@ -4596,31 +4621,9 @@
     }
 
     .route-rows {
-      display: grid;
-      grid-template-rows: subgrid;
-      grid-row: 5 / span 4;
-      min-width: 0;
-    }
-
-    .route-a>.route-name,
-    .route-a>.route-banner,
-    .route-a>.route-sum,
-    .route-a>.route-metrics,
-    .route-a .route-rows>div {
-      justify-self: start;
-      /* 0.92/1.08 再减去 Path B 左右留白，使左侧内容宽度与 Path B 一致 */
-      width: calc(85.185% - 68px);
-      margin-left: 28px;
-      min-width: 0;
-    }
-
-    .route-b>.route-name,
-    .route-b>.route-banner,
-    .route-b>.route-sum,
-    .route-b>.route-metrics,
-    .route-b .route-rows>div {
-      margin-left: 40px;
-      margin-right: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
       min-width: 0;
     }
 
@@ -4631,17 +4634,485 @@
       font-size: 24px;
       font-weight: 600;
       line-height: 1.35;
-      text-align: center;
+      text-align: left;
     }
 
     #paths .route-b .route-name {
       color: #3c188f;
       font-size: 24px;
-      text-align: center
+      text-align: left;
+      /* 标题和下面图的间距再拉开一点 */
+      margin-bottom: 32px;
+      padding-left: 0
     }
 
     #paths .route-b .route-banner p {
       font-size: 18px
+    }
+
+    /* Path B：左右两个圆。左守存量，右为腾出来的三人全栈试点 */
+    .split-map {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-areas:
+        "left hubs right"
+        "steps steps steps";
+      column-gap: 10px;
+      row-gap: 22px;
+      align-items: center;
+      margin-top: 6px;
+    }
+
+    .split-side {
+      min-width: 0;
+    }
+
+    .split-side.is-left {
+      grid-area: left;
+    }
+
+    .split-hubs {
+      grid-area: hubs;
+    }
+
+    .split-side.is-right {
+      grid-area: right;
+    }
+
+    .split-side ul {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .split-side.is-left ul {
+      align-items: flex-end;
+    }
+
+    .split-side.is-right ul {
+      align-items: flex-start;
+    }
+
+    .split-side li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #3a4354;
+      font-size: 16px;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    /* 短线从文案连到圆，左进右出 */
+    .split-side.is-left li::after,
+    .split-side.is-right li::before {
+      content: "";
+      flex: 0 0 52px;
+      height: 1.5px;
+      background: #c5c6d0;
+    }
+
+    .split-hubs {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      min-height: 220px;
+      padding: 86px 8px 36px;
+    }
+
+    .split-hubs::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 0;
+      width: 500px;
+      height: 196px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(125, 87, 239, .28), rgba(89, 39, 219, .08) 58%, transparent 74%);
+      pointer-events: none;
+    }
+
+    .split-orb,
+    .split-exchange {
+      position: relative;
+      z-index: 1;
+    }
+
+    .split-orb {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 156px;
+      height: 156px;
+      border-radius: 50%;
+      background: #5927db;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 14px 30px rgba(89, 39, 219, .22);
+    }
+
+    .split-orb strong {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .split-orb span {
+      margin-top: 4px;
+      color: rgba(255, 255, 255, .86);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .split-exchange {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: #5927db;
+    }
+
+    .split-exchange svg {
+      width: 64px;
+      height: 36px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .split-exchange b {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    /* 公式和抽人前提贴在全栈试点圆的上下，不把圆撑离中间一行 */
+    .split-pilot {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .split-formula {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 12px);
+      width: 220px;
+      margin: 0;
+      transform: translateX(-50%);
+      color: #3c188f;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    /* 全栈试点圆下面的五步，箭头把标题串成一条路径 */
+    .pilot-steps {
+      grid-area: steps;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px 0;
+      margin: 4px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .pilot-steps li {
+      display: inline-flex;
+      align-items: center;
+      color: #24183a;
+      font-family: "HarmonyOS Sans SC", "PingFang SC", sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+
+    .pilot-steps li:not(:last-child)::after {
+      content: "";
+      width: 28px;
+      height: 12px;
+      margin: 0 8px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 14'%3E%3Cpath fill='%235927db' d='M0 5.2h22.2L18.6 1.6 20.8 0 34 7 20.8 14l-2.2-1.6 3.6-3.6H0z'/%3E%3C/svg%3E") center / 28px 12px no-repeat;
+    }
+
+    @media(max-width:860px) {
+      .pilot-steps li {
+        white-space: normal;
+      }
+    }
+
+    @media(max-width:860px) {
+      .split-map {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "hubs"
+          "steps"
+          "left"
+          "right";
+        row-gap: 16px;
+      }
+
+      .split-side.is-left ul,
+      .split-side.is-right ul {
+        align-items: flex-start;
+      }
+
+      .split-side li {
+        white-space: normal;
+      }
+
+      .split-side.is-left li::after,
+      .split-side.is-right li::before {
+        display: none;
+      }
+
+      .split-hubs::before {
+        width: min(430px, 100%);
+      }
+
+      .split-orb {
+        width: 108px;
+        height: 108px;
+      }
+
+      .split-orb strong {
+        font-size: 18px;
+      }
+
+      .split-side.is-right {
+        padding-top: 12px;
+        border-top: 1px solid rgba(89, 39, 219, .14);
+      }
+    }
+
+    /* 窄屏两圆并排会顶出卡片，缩小圆 */
+    @media(max-width:520px) {
+      .split-hubs {
+        gap: 6px;
+        min-height: 0;
+      }
+
+      .split-orb {
+        flex: 0 0 88px;
+        width: 88px;
+        height: 88px;
+      }
+
+      .split-orb strong {
+        font-size: 16px;
+      }
+
+      .split-exchange svg {
+        width: 40px;
+        height: 24px;
+      }
+    }
+
+    /* 按参考图还原：蓝色色块、三段粗圆弧、折线接到圆点 */
+    .orbit {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) 400px minmax(260px, 1fr);
+      grid-template-rows: auto auto;
+      column-gap: 28px;
+      row-gap: 28px;
+      align-items: start;
+    }
+
+    .orbit-wires {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .orbit-node {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 3px minmax(0, 1fr);
+      column-gap: 10px;
+      justify-items: start;
+      min-width: 0;
+    }
+
+    /* 从标题拉到正文底部的紫线，盖住这一组内容的高度 */
+    .orbit-node::before {
+      content: "";
+      grid-row: 1 / span 2;
+      width: 3px;
+      border-radius: 2px;
+      background: #5927db;
+    }
+
+    .orbit-node h4,
+    .orbit-node .team-caps {
+      grid-column: 2;
+    }
+
+    /* 01 独占左侧，03 独占右侧，02 内容少，放在圆环正下方 */
+    .orbit-node.n1 {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    /* 02 在圆环正下方，第二项句子较长，向右借用空位，避免换行 */
+    .orbit-node.n2 {
+      grid-column: 2 / 4;
+      grid-row: 2;
+      grid-template-columns: 3px max-content;
+      align-self: start;
+      justify-self: start;
+      width: max-content;
+      max-width: 100%;
+    }
+
+    .orbit-node.n2 .team-caps li:nth-child(2) {
+      white-space: nowrap;
+    }
+
+    .orbit-ring {
+      position: relative;
+      z-index: 1;
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+      width: 400px;
+      height: 400px;
+    }
+
+    .orbit-ring svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ring-label {
+      fill: #fff;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .ring-num {
+      fill: none;
+      font-family: var(--sans);
+      font-size: 78px;
+      font-weight: 500;
+      stroke: #8b6cf6;
+      stroke-width: 1.35;
+    }
+
+    .orbit-node.n3 {
+      grid-column: 3;
+      grid-row: 1;
+      align-self: center;
+    }
+
+    /* 标号和标题同为白字，色块用页面里的 Morezen 紫 */
+    .orbit-node h4 {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      padding: 5px 10px;
+      border-radius: 3px;
+      background: #5927db;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .orbit-node h4 span {
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .team-caps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* 标题和说明同一行排完，有说明时用冒号接上 */
+    .team-caps li {
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .team-caps strong {
+      display: inline;
+      color: #3a4354;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    .team-caps strong:has(+ p)::after {
+      content: "：";
+    }
+
+    .team-caps p {
+      display: inline;
+      margin: 0;
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    @media(max-width:980px) {
+      .orbit {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      /* 窄屏改成上下排，第二项恢复正常换行 */
+      .orbit-node.n2 {
+        width: auto;
+        max-width: none;
+      }
+
+      .orbit-node.n2 .team-caps li:nth-child(2) {
+        white-space: normal;
+      }
+
+      .orbit-ring {
+        order: -1;
+        width: 260px;
+        height: 260px;
+        margin: 0 auto;
+      }
     }
 
     .route-banner {
@@ -4649,9 +5120,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: auto;
+      width: max-content;
+      max-width: 100%;
       min-height: 82px;
-      margin: 0 0 14px;
+      margin: 0 auto 14px;
       padding: 14px 64px;
       border-radius: 999px;
       color: #fff;
@@ -4716,6 +5188,69 @@
       color: #666;
       font-size: 16px;
       line-height: 1.75;
+    }
+
+    /* 三条方案底部同一套总结：一句总结，后面接若干标签。
+       这里是 section，要盖掉整节的大内边距和底边线，标签下面只留卡片自己的间距 */
+    .path-brief {
+      margin-top: 28px;
+      padding: 22px 0 0;
+      border-top: 1px solid rgba(89, 39, 219, .14);
+      border-bottom: 0;
+    }
+
+    .path-brief h4 {
+      margin: 0 0 8px;
+      color: #5927db;
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .path-brief>p {
+      margin: 0 0 14px;
+      color: #3c3452;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* 总结句后面直接排标签：紫色是优势，红色是劣势 */
+    .path-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .path-tags li {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      margin: 0;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .path-tags li::before {
+      content: none;
+    }
+
+    .path-tags .is-pro {
+      background: #efe8ff;
+      color: #5927db;
+    }
+
+    .path-tags .is-con {
+      background: #fde8e8;
+      color: #c62828;
     }
 
     /* 优势、成本和前提合成一组卡片，判断词和说明放在一起 */
@@ -4862,12 +5397,164 @@
       letter-spacing: -.03em;
     }
 
-    .route-rows>div {
-      margin: 0 0 12px
+    /* Path C：两张架构图并排，占满方案卡宽度 */
+    .route-c-split {
+      display: block;
+      margin: 0;
     }
 
-    .route-rows>div:last-child {
-      margin-bottom: 0
+    /* 架构一和架构二并排，每张保持原来右侧一列的宽度 */
+    .domain-arch {
+      grid-area: arch;
+      align-self: start;
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .domain-arch section {
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+      min-width: 0;
+      padding: 10px 8px 12px;
+      border-radius: 12px;
+      background: #f4efff;
+    }
+
+    /* 两张架构之间的单向箭头：从职能架构转到业务域、全栈架构 */
+    .arch-shift {
+      display: flex;
+      flex: 0 0 64px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+      gap: 4px;
+      color: #5927db;
+    }
+
+    .arch-shift svg {
+      width: 40px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .arch-shift b {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .domain-arch h4 {
+      margin: 0;
+      color: #5927db;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .domain-arch h4+p {
+      margin: 2px 0 8px;
+      color: #6e6880;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* 架构一、架构二：上面是归属，下面用短线挂管理者和人 */
+    .domain-arch ul {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .domain-arch .is-now ul {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .domain-arch li {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .domain-arch strong {
+      display: block;
+      padding: 5px 2px;
+      border-radius: 8px;
+      background: #5927db;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    /* 管理者单独一行：架构一是技术负责人，架构二是业务负责人 */
+    .domain-arch em {
+      position: relative;
+      display: block;
+      margin-top: 7px;
+      padding: 4px 2px;
+      border-radius: 8px;
+      background: #fff;
+      color: #5927db;
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    .domain-arch li span {
+      position: relative;
+      display: block;
+      margin-top: 7px;
+      padding: 4px 2px;
+      border-radius: 8px;
+      background: #fff;
+      color: #3c3452;
+      font-size: 12px;
+      line-height: 1.3;
+      text-align: center;
+    }
+
+    /* 短竖线把上面的归属连到下面的人 */
+    .domain-arch em::before,
+    .domain-arch li span::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -7px;
+      width: 1px;
+      height: 7px;
+      background: #c5c6d0;
+    }
+
+    /* 部门、共性技术用深色；大厂业务线下的全栈标签用红色和其他岗位分开 */
+    .domain-arch .is-dept strong,
+    .domain-arch .is-shared strong {
+      background: #3c188f;
+    }
+
+    .domain-arch .is-case span {
+      background: #fde8e8;
+      color: #c62828;
+      font-weight: 600;
+    }
+
+    .route-rows>div {
+      margin: 0
     }
 
     .route-rows div {
@@ -4926,87 +5613,28 @@
 
     @media(max-width:980px) {
       .route-board {
-        grid-template-columns: 1fr;
-        grid-template-rows: none;
-        padding: 0;
-      }
-
-      .route-board::before {
-        background: linear-gradient(180deg, #f3edff 0 50%, #f8f6ff 50% 100%)
+        --node: 40px;
+        --gutter: 14px;
+        --route-gap: 20px;
+        --node-top: 18px;
       }
 
       .route-a,
-      .route-b {
-        display: block;
-        grid-row: auto;
-        grid-column: auto;
-        padding: 22px;
+      .route-b,
+      .route-c {
+        padding: 18px 16px 18px;
       }
 
       .route-b {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
+        padding-bottom: 28px;
       }
 
-      .route-rows {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        grid-row: auto;
-        margin-top: 16px;
-      }
-
-      .route-a>.route-name,
-      .route-a>.route-banner,
-      .route-a>.route-sum,
-      .route-a>.route-metrics,
-      .route-a .route-rows>div,
-      .route-b>.route-name,
-      .route-b>.route-banner,
-      .route-b>.route-sum,
-      .route-b>.route-metrics,
-      .route-b .route-rows>div {
-        grid-column: auto;
-        grid-row: auto;
-        justify-self: stretch;
-        width: auto;
-        min-width: 0;
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      .route-banner,
-      .route-sum,
-      .route-metrics {
-        width: 100%;
-        margin-bottom: 0;
-      }
-
-      .route-sum,
-      .route-metrics,
-      .route-rows {
-        margin-top: 16px;
-      }
-
-      .route-b .route-sum,
-      .route-b .route-metrics,
-      .route-b .route-rows {
-        margin-top: 0;
-      }
-
-      .route-b {
-        padding-top: 44px;
+      #paths .route-b .route-name {
+        padding-left: 0
       }
 
       .route-pick {
-        top: 0;
-        right: 0;
-        border-radius: 0 0 0 12px;
-      }
-
-      .route-rows>div {
-        margin: 0
+        right: 12px
       }
     }
 
@@ -5021,6 +5649,19 @@
 
       .route-metrics {
         gap: 8px
+      }
+
+      /* 窄屏时两张架构图改为上下排 */
+      .domain-arch {
+        flex-direction: column;
+      }
+
+      .arch-shift svg {
+        transform: rotate(90deg);
+      }
+
+      .domain-arch .is-now ul {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .route-a .route-metrics {
@@ -5062,9 +5703,16 @@
       }
 
       .route-sum,
+      .path-brief>p,
+      .path-tags li,
       .route-points article>p,
       .route-points li p,
-      .route-close {
+      .route-close,
+      .team-caps li,
+      .team-caps strong,
+      .team-caps p,
+      .split-side li,
+      .split-note {
         font-size: 15px
       }
 
@@ -5075,39 +5723,21 @@
 
     @media print {
       .route-board {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: none;
-        padding: 0;
+        display: block
       }
 
       .route-a,
       .route-b,
-      .route-rows {
-        display: block;
-        grid-row: auto;
-        grid-column: auto
+      .route-c {
+        break-inside: avoid;
+        margin-bottom: 16px
       }
 
-      .route-a {
-        clip-path: none;
-        padding: 16px
-      }
-
-      .route-b {
-        margin-left: 0;
-        padding: 16px
-      }
-
-      .route-a>.route-name,
-      .route-a>.route-banner,
-      .route-a>.route-sum,
-      .route-a>.route-metrics,
-      .route-a .route-rows>div {
-        width: auto;
-        margin-left: 0;
-      }
-
-      .route-banner {
+      .route-banner,
+      .split-orb,
+      .route-a::before,
+      .route-b::before,
+      .route-c::before {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact
       }
@@ -5739,8 +6369,8 @@
     .fit-head,
     .fit article {
       display: grid;
-      grid-template-columns: minmax(180px, .9fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
-      column-gap: 28px;
+      grid-template-columns: minmax(148px, .8fr) repeat(3, minmax(0, 1fr));
+      column-gap: 18px;
       align-items: center
     }
 
@@ -5756,16 +6386,21 @@
     }
 
     .fit-head span:nth-child(2),
-    .fit-head span:nth-child(3) {
+    .fit-head span:nth-child(3),
+    .fit-head span:nth-child(4) {
       font-family: var(--en);
       font-size: 22px;
       font-weight: 600;
-      letter-spacing: .12em;
+      letter-spacing: .06em;
       color: #5927db
     }
 
     .fit-head span:nth-child(3) {
       color: #6d46ea
+    }
+
+    .fit-head span:nth-child(4) {
+      color: #3c188f
     }
 
     .fit article {
@@ -5837,26 +6472,36 @@
       }
 
       .fit-head {
-        grid-template-columns: 1fr 1fr
+        grid-template-columns: 1fr 1fr 1fr
       }
 
       .fit article {
         padding: 14px 0
       }
 
-      .fit-cell::before {
-        content: "PATH A";
+      .fit-cell:nth-child(2)::before,
+      .fit-cell:nth-child(3)::before,
+      .fit-cell:nth-child(4)::before {
         flex: 0 0 auto;
         font-family: var(--en);
         font-size: 14px;
         font-weight: 600;
-        letter-spacing: .06em;
-        color: #3c188f
+        letter-spacing: .06em
       }
 
-      .fit article .fit-cell:last-child::before {
+      .fit-cell:nth-child(2)::before {
+        content: "PATH A";
+        color: #5927db
+      }
+
+      .fit-cell:nth-child(3)::before {
         content: "PATH B";
         color: #6d46ea
+      }
+
+      .fit-cell:nth-child(4)::before {
+        content: "PATH C";
+        color: #3c188f
       }
     }
 
@@ -6328,8 +6973,8 @@
   <header class="header">
     <div class="wrap header-inner"><a class="brand" href="#top" aria-label="墨尔冥想，回到首页"><img class="brand-logo"
           src="assets/more-logo-white.png" alt="More 墨尔冥想" /></a>
-      <nav aria-label="页面导航"><a href="#objective">目标顺序</a><a href="#gaps">缺口识别</a><a href="#paths">组织路径</a><a
-          href="#compare">现阶段结论</a><a href="#action">试点安排</a></nav>
+      <nav aria-label="页面导航"><a href="#objective">目标顺序</a><a href="#gaps">缺口识别</a><a href="#paths">变革方案</a><a
+          href="#compare">现阶段结论</a></nav>
       <div class="header-actions"><button class="header-btn" type="button" id="printBtn">打印方案</button><a
           class="header-btn" href="#compare">查看摘要</a></div>
       <div class="progress" id="progress"></div>
@@ -6375,8 +7020,7 @@
     </section>
     <section id="gaps">
       <div class="wrap section-content">
-        <h2 class="section-title reveal">二、缺口识别<br><em>沿工作路径，找出挡在目标前的四项缺口</em></h2>
-        <!-- 四栏时间线：色条标题 + 一句判断 + 编号要点，对应最新稿的四项缺口 -->
+        <h2 class="section-title reveal">二、缺口识别<br><em>四项能力及组织缺口，阻碍提效和创新</em></h2>
         <div class="gap-board">
           <article class="gap-col is-focus reveal">
             <header class="gap-head">
@@ -6387,11 +7031,11 @@
                   <path d="M15 3.5V7h4" />
                 </svg></i>
             </header>
-            <p class="gap-lead">缺少业务理解、价值判断和完整方案，需求常在开发中补齐。</p>
+            <p class="gap-lead">需求和方案这一关没把住，低价值需求和返工一起进了研发。</p>
             <ol class="gap-points">
               <li><span class="gap-no" aria-hidden="true">1</span>
-                <div><strong>业务理解偏被动</strong>
-                  <p>主动理解业务、用户和运营目标不够，改善机会也挖得少。</p>
+                <div><strong>被动接受需求</strong>
+                  <p>需求多为被动接收，主动理解业务、用户和运营目标不够，改善机会也挖得少。</p>
                 </div>
               </li>
               <li><span class="gap-no" aria-hidden="true">2</span>
@@ -6400,8 +7044,8 @@
                 </div>
               </li>
               <li><span class="gap-no" aria-hidden="true">3</span>
-                <div><strong>方案在开发中补齐</strong>
-                  <p>业务规则、流程分支、异常场景和验收标准不完整，带来反复沟通和返工。</p>
+                <div><strong>方案的完整性有待提升</strong>
+                  <p>业务规则、流程分支、异常场景等不完整，带来反复沟通；方案的扩展性、复用性、通用性较差，造成经常返工。</p>
                 </div>
               </li>
               <li><span class="gap-no" aria-hidden="true">4</span>
@@ -6420,7 +7064,7 @@
                   <path d="M9 9.2 11 14.2M15 9.2 13 14.2M9.2 8h5.6" />
                 </svg></i>
             </header>
-            <p class="gap-lead">研发排期被存量占满，跨端判断和公共复用都没有排上。</p>
+            <p class="gap-lead">被存量钉在本端，看不清业务，也没有产品思维。兜了一部分，但兜不住，漏到线上。</p>
             <ol class="gap-points">
               <li><span class="gap-no" aria-hidden="true">1</span>
                 <div><strong>研发产能被存量占用</strong>
@@ -6428,8 +7072,8 @@
                 </div>
               </li>
               <li><span class="gap-no" aria-hidden="true">2</span>
-                <div><strong>技术人员无跨端思维</strong>
-                  <p>前端、客户端和服务端各守一段，缺少对整条业务链路的判断，跨端协作容易卡住。</p>
+                <div><strong>技术人员无产品思维</strong>
+                  <p>缺少对产品方案进行评审、提出更优方案的能力。</p>
                 </div>
               </li>
               <li><span class="gap-no" aria-hidden="true">3</span>
@@ -6446,7 +7090,7 @@
                   <path d="M7 16.5v-4.5M12 16.5V8M17 16.5v-7" />
                 </svg></i>
             </header>
-            <p class="gap-lead">上线后缺少量化依据，难以决策继续、调整或停止。</p>
+            <p class="gap-lead">漏到线上后，数据不好看，也缺少判断依据，继续、调整或停止都定不下来。</p>
             <ol class="gap-points">
               <li><span class="gap-no" aria-hidden="true">1</span>
                 <div><strong>数据采集基线薄弱</strong>
@@ -6472,7 +7116,7 @@
                   <path d="M18 14.5 18.7 16.8 19.5 17.5 18.7 18.2 18 20.5 17.3 18.2 16.5 17.5 17.3 16.8 18 14.5z" />
                 </svg></i>
             </header>
-            <p class="gap-lead">场景拓展、场景化产品支撑偏弱，迭代滞后易错失行业创新红利。</p>
+            <p class="gap-lead">落地场景做不出来，业务也对不齐。落地慢、验证慢，先行机会已经错失。</p>
             <ol class="gap-points">
               <li><span class="gap-no" aria-hidden="true">1</span>
                 <div><strong>场景覆盖与应用范围有限</strong>
@@ -6497,172 +7141,260 @@
     </section>
     <section id="paths">
       <div class="wrap section-content">
-        <h2 class="section-title reveal">三、两条组织路径<br><em>Path A 改组织归属<span class="em-split">Path B 改创新流程</span></em></h2>
+        <h2 class="section-title reveal">三、变革解决方案<br><em>三条路径循序渐进：先补能力缺口，成熟后再试点和重组</em></h2>
         <div class="route-board reveal">
           <article class="route-a" id="pathA">
-            <h3 class="route-name">PATH A：组织模式大升级</h3>
-            <header class="route-banner"><span class="route-mark" aria-hidden="true"><svg viewBox="0 0 24 24">
-                  <circle cx="8" cy="8" r="2.2" />
-                  <circle cx="16" cy="8" r="2.2" />
-                  <circle cx="12" cy="15.5" r="2.2" />
-                  <path d="M10 9.4 11.2 13.2M14 9.4 12.8 13.2M10.2 8h3.6" />
-                </svg></span>
-              <p>打破职能墙 + 按业务域组建团队</p>
-            </header>
-            <p class="route-sum">推动前端、客户端、服务端等能力围绕业务交付协同，由业务模块负责人统筹多端研发，承担从机会识别到上线维护的端到端结果。</p>
-            <div class="route-metrics">
-              <article><span>核心目标</span><strong>端到端</strong><small>对业务域结果负责</small></article>
-              <article><span>主要收益</span><strong>少交接</strong><small>减少联调，决策更快</small></article>
-              <article><span>试点成本</span><strong>高</strong><small>人才门槛与切换</small></article>
+            <h3 class="route-name">PATH A：角色能力大升级，提升各岗位工作效能，把重复/无效劳动腾出来，支持创新拓展</h3>
+            <div class="orbit">
+              <svg class="orbit-wires" aria-hidden="true"></svg>
+              <article class="orbit-node n1">
+                <h4><span>01</span>产品团队</h4>
+                <ol class="team-caps">
+                  <li><strong>业务挖掘</strong>
+                    <p>用户运营思维、创新思维挖掘业务痛点。</p>
+                  </li>
+                  <li><strong>竞品分析找到差异化产品机会</strong></li>
+                  <li><strong>需求价值评估、ROI、方案减法能力</strong></li>
+                  <li><strong>产品方案的完整性</strong>
+                    <p>全面分支覆盖，兼容配置化和扩展性、埋点与指标设计、UED设计。</p>
+                  </li>
+                  <li><strong>数据运营与诊断能力</strong>
+                    <p>数据挖掘、数据分析。</p>
+                  </li>
+                  <li><strong>技术能力和 AI 能力</strong>
+                    <p>熟悉技术可行性和 AI 能力边界，利用 AI / Vibe Coding 快速做出原型和 PoC / MVP 去验证（FDE）。</p>
+                  </li>
+                </ol>
+              </article>
+              <article class="orbit-node n2">
+                <h4><span>02</span>技术团队</h4>
+                <ol class="team-caps">
+                  <li><strong>提升产品思维，反哺产品方案</strong></li>
+                  <li><strong>技术架构和复用的技术设计能力</strong>
+                    <p>减少重复开发，提升系统的扩展性。</p>
+                  </li>
+                  <li><strong>AI全栈开发的转型探索</strong></li>
+                </ol>
+              </article>
+              <div class="orbit-ring" aria-hidden="true">
+                <svg viewBox="0 0 400 400">
+                  <defs>
+                    <linearGradient id="arcTop" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#c4b6ff" />
+                      <stop offset="1" stop-color="#7d57ef" />
+                    </linearGradient>
+                    <linearGradient id="arcBottom" x1="1" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#7d57ef" />
+                      <stop offset="1" stop-color="#3c188f" />
+                    </linearGradient>
+                    <linearGradient id="arcLeft" x1="0" y1="1" x2="0" y2="0">
+                      <stop offset="0" stop-color="#b09bff" />
+                      <stop offset="1" stop-color="#8b6cf6" />
+                    </linearGradient>
+                    <path id="ringA" d="M 172.6 70.9 A 132 132 0 0 1 325.5 240.8" />
+                    <path id="ringB" d="M 126.2 309.4 A 132 132 0 0 0 304 281.3" />
+                    <path id="ringC" d="M 126.2 90.6 A 132 132 0 0 0 90.6 273.8" />
+                  </defs>
+                  <path d="M 172.6 70.9 A 132 132 0 0 1 325.5 240.8" fill="none" stroke="url(#arcTop)" stroke-width="50" stroke-linecap="round" />
+                  <path d="M 304 281.3 A 132 132 0 0 1 126.2 309.4" fill="none" stroke="url(#arcBottom)" stroke-width="50" stroke-linecap="round" />
+                  <path d="M 90.6 273.8 A 132 132 0 0 1 126.2 90.6" fill="none" stroke="url(#arcLeft)" stroke-width="50" stroke-linecap="round" />
+                  <text class="ring-label"><textPath href="#ringA" startOffset="50%" text-anchor="middle">AI团队</textPath></text>
+                  <text class="ring-label"><textPath href="#ringB" startOffset="50%" text-anchor="middle">技术团队</textPath></text>
+                  <text class="ring-label"><textPath href="#ringC" startOffset="50%" text-anchor="middle">产品团队</textPath></text>
+                  <!-- 圆心火箭：去掉内圈和箭头，只留一个向上的火箭 -->
+                  <g transform="translate(200 206)">
+                    <path d="M-16 16 L-32 38 L-16 28 Z" fill="#7d57ef" />
+                    <path d="M16 16 L32 38 L16 28 Z" fill="#7d57ef" />
+                    <path d="M0 -52 C18 -36 20 -6 20 20 H-20 C-20 -6 -18 -36 0 -52 Z" fill="#5927db" />
+                    <circle cx="0" cy="-8" r="8" fill="#f3eeff" />
+                    <path d="M-8 22 Q0 42 8 22 Z" fill="#c4b6ff" />
+                  </g>
+                  <circle data-dot="1" cx="59.7" cy="119" r="5.5" fill="#fff" stroke="#d0d4de" stroke-width="1.5" />
+                  <circle data-dot="2" cx="200" cy="362" r="5.5" fill="#fff" stroke="#d0d4de" stroke-width="1.5" />
+                  <circle data-dot="3" cx="340.3" cy="119" r="5.5" fill="#fff" stroke="#d0d4de" stroke-width="1.5" />
+                </svg>
+              </div>
+              <article class="orbit-node n3">
+                <h4><span>03</span>AI团队</h4>
+                <ol class="team-caps">
+                  <li><strong>理解业务，挖掘 AI 化场景，以 FDE 方式做前线落地交付</strong></li>
+                  <li><strong>沉淀 AI 中台能力</strong>
+                    <p>支撑新业务快速轻量化接入。</p>
+                  </li>
+                  <li><strong>模型选型评估</strong>
+                    <p>按需选择基座模型，权衡效果、成本管控、性能及合规。</p>
+                  </li>
+                  <li><strong>AI 流程编排</strong>
+                    <p>设计 Prompt、RAG、Agent 等串联能力形成可用应用。</p>
+                  </li>
+                  <li><strong>AI 赋能与组织推广</strong>
+                    <p>沉淀 AI 工具、模板和使用规范，开展岗位化赋能培训，推动全员 AI 提效。</p>
+                  </li>
+                </ol>
+              </article>
             </div>
-            <div class="route-rows">
-              <div><b>适用场景</b>
-                <ol>
-                  <li><span>业务边界清晰，域内工作量稳定，可先在独立性较强的业务域试点。</span></li>
-                  <li><span>工程已经成熟，具备基础架构和成熟的通用模块。</span></li>
-                </ol>
-              </div>
-              <div><b>人才要求</b>
-                <ol>
-                  <li><span>门槛高、能力强，需要有人负责跨端交付和长期维护。</span></li>
-                  <li><span>团队中既有全栈，也有兼具业务思维与全栈能力的成员，都能交付。</span></li>
-                  <li><span>成员可以向上下游扩展自己的能力边界。</span></li>
-                </ol>
-              </div>
-              <div><b>主要代价</b>
-                <ol>
-                  <li><span>人才门槛高，还要承受组织重组、知识交接和可能的重复建设。</span></li>
-                </ol>
-              </div>
-              <div><b>路径优势</b>
-                <p>通过 AI Coding 降低单点编码成本，以业务域小队减少跨团队联调和排队。</p>
-              </div>
-            </div>
+            <section class="path-brief">
+              <h4>方案总结</h4>
+              <p>以较小的成本补齐岗位能力：现有人员能提升的先提升，缺口再由更匹配的人补上，让团队在需求全链路中把产能提上来，并完成创新的挖掘和落地。</p>
+              <ul class="path-tags">
+                <li class="is-pro">现有业务稳定</li>
+                <li class="is-pro">岗位补齐缺口</li>
+                <li class="is-pro">提效成本低</li>
+                <li class="is-pro">把重复/无效劳动腾出来</li>
+                <li class="is-con">能力补齐看个人，很难同步拉齐</li>
+              </ul>
+            </section>
           </article>
           <article class="route-b" id="pathB">
-            <span class="route-pick">推荐</span>
-            <h3 class="route-name">PATH B：小团队创新试点</h3>
-            <header class="route-banner"><span class="route-mark" aria-hidden="true"><svg viewBox="0 0 24 24">
-                  <path d="M12 3.5 13.2 8.2 18 9.4 13.2 10.6 12 15.3 10.8 10.6 6 9.4 10.8 8.2 12 3.5z" />
-                  <path d="M5 16.5h14M8 19.5h8" />
-                </svg></span>
-              <p>产品牵头+AI 赋能+1 名技术全栈支撑</p>
-            </header>
-            <p class="route-sum">保留专业分工，由产品与 AI 使用 Vibe Coding 完成机会判断、方案构建、PoC / MVP 验证和早期迭代；技术团队保障存量系统、工程质量和生产支持。</p>
-            <div class="route-metrics">
-              <article><span>核心目标</span><strong>先验证，创新快</strong><small>系统仍稳定</small></article>
-              <article><span>主要收益</span><strong>可控</strong><small>不重组，保留经验</small></article>
-              <article><span>试点成本</span><strong>低</strong><small>不要求全员跨端</small></article>
+            <h3 class="route-name">PATH B：小团队全栈试点新项目</h3>
+            <div class="split-map">
+              <div class="split-side is-left">
+                <ul>
+                  <li>存量继续有人守</li>
+                  <li>现有工作不能停</li>
+                  <li>核心系统继续维护</li>
+                  <li>组织归属先不动</li>
+                </ul>
+              </div>
+              <div class="split-hubs">
+                <div class="split-orb"><strong>存量维稳</strong><span>现有业务</span></div>
+                <div class="split-exchange">
+                  <svg viewBox="0 0 64 36" aria-hidden="true">
+                    <path d="M6 11h40" />
+                    <path d="M38 5l12 6-12 6" />
+                    <path d="M58 25H18" />
+                    <path d="M26 19l-12 6 12 6" />
+                  </svg>
+                  <b>腾出 3 人</b>
+                </div>
+                <div class="split-pilot">
+                  <p class="split-formula">产品牵头 + AI + 一名技术全栈 = 小团队</p>
+                  <div class="split-orb"><strong>全栈试点</strong><span>新项目验证</span></div>
+                </div>
+              </div>
+              <div class="split-side is-right">
+                <ul>
+                  <li>产品自己做</li>
+                  <li>前端自己做</li>
+                  <li>后端自己做</li>
+                  <li>AI 自己做</li>
+                </ul>
+              </div>
+              <ol class="pilot-steps" aria-label="全栈试点的路径">
+                <li>盘点人员匹配度</li>
+                <li>选定场景与验收标准</li>
+                <li>完成首次 PoC / MVP</li>
+                <li>持续使用与复盘</li>
+                <li>复制相邻场景</li>
+              </ol>
             </div>
-            <div class="route-rows">
-              <div><b>适用场景</b>
-                <ol>
-                  <li><span>存量系统复杂，需要先保证稳定。</span></li>
-                  <li><span>业务线较多，暂时无法完全按业务域划分。</span></li>
-                </ol>
-              </div>
-              <div><b>人才要求</b>
-                <ol>
-                  <li><span>不要求全员提升，也不用全员做人才调整；Path A 则需要全员提升。</span></li>
-                  <li><span>由产品牵头，加上 AI；有候选人再加一名全栈，率先完成转型，用来验证工作方式，条件成熟后再进入 Path A。</span></li>
-                  <li><span>按角色分层，产品做价值判断与完整方案，AI 做应用开发与评测，技术守住生产边界。</span></li>
-                </ol>
-              </div>
-              <div><b>主要代价</b>
-                <ol>
-                  <li><span>部分人才门槛高，职能边界和排队还在，组织需要较多时间和周期来验证和实现转型。</span></li>
-                </ol>
-              </div>
-              <div><b>路径优势</b>
-                <p>保留现有分工，以系统稳定为基础，在受控环境中开展创新试点。成功后经验复制。</p>
-              </div>
-            </div>
+            <section class="path-brief">
+              <h4>方案总结</h4>
+              <p>以保持现有业务稳定为前提，抽出一个小团队自己验证新项目，跑通后再复制。现在人手很紧，很可能抽不出来，全栈试点人员的门槛也要更高。</p>
+              <ul class="path-tags">
+                <li class="is-pro">先稳住现有业务</li>
+                <li class="is-pro">小团队自己验证</li>
+                <li class="is-pro">跑通后再复制</li>
+                <li class="is-con">很可能抽不出人手</li>
+                <li class="is-con">全栈试点人员门槛高</li>
+              </ul>
+            </section>
           </article>
+          <article class="route-c" id="pathC">
+          <h3 class="route-name">PATH C：组织模式大升级，打破职能墙，按业务域组建团队</h3>
+          <div class="route-c-split">
+          <div class="domain-arch" aria-label="研发人做业务线，但归职能部门技术负责人管；研发人归业务负责人管，可由技术负责人担任，并转全栈开发">
+            <section class="is-dept">
+              <h4>架构一：职能架构</h4>
+              <p>研发人做业务线，但归职能部门技术负责人管</p>
+              <ul>
+                <li><strong>前端部门</strong><em>技术负责人</em><span>基础业务</span><span>搜索</span><span>电商</span></li>
+                <li><strong>客户端部门</strong><em>技术负责人</em><span>基础业务</span><span>搜索</span><span>电商</span></li>
+                <li><strong>服务端部门</strong><em>技术负责人</em><span>基础业务</span><span>搜索</span><span>电商</span></li>
+              </ul>
+            </section>
+            <div class="arch-shift" aria-hidden="true">
+              <svg viewBox="0 0 40 22">
+                <path d="M2 11h30" />
+                <path d="M24 4l10 7-10 7" />
+              </svg>
+              <b>转为</b>
+            </div>
+            <section class="is-now">
+              <h4>架构二：业务域架构、全栈架构</h4>
+              <p>研发人归业务负责人管（可由技术负责人担任）。大厂业务线里的人都转全栈</p>
+              <ul>
+                <li><strong>电商</strong><em>业务负责人</em><span>前端</span><span>客户端</span><span>服务端</span></li>
+                <li><strong>搜索</strong><em>业务负责人</em><span>前端</span><span>客户端</span><span>服务端</span></li>
+                <li class="is-case"><strong>大厂业务线</strong><em>业务负责人</em><span>全栈</span><span>全栈</span><span>全栈</span></li>
+                <li class="is-shared"><strong>共性能力</strong><em>技术负责人</em><span>架构</span><span>基础服务</span><span>复杂问题</span></li>
+              </ul>
+            </section>
+          </div>
+          <section class="path-brief">
+            <h4>方案总结</h4>
+            <p>由原来的职能部门换成按业务域组建团队，由业务负责人管人管业务，这个角色也可由技术负责人担任。大厂业务线里的人都转全栈。前提是业务边界需清晰、系统工程成熟、人员能力全面。</p>
+            <ul class="path-tags">
+              <li class="is-pro">端到端，对结果负责</li>
+              <li class="is-pro">少联调</li>
+              <li class="is-pro">少跨组织协调排队</li>
+              <li class="is-pro">决策快</li>
+              <li class="is-con">业务边界需清晰</li>
+              <li class="is-con">系统工程需很成熟</li>
+              <li class="is-con">人才能力需很全面</li>
+              <li class="is-con">人员调整影响现有业务</li>
+            </ul>
+          </section>
+        </article>
         </div>
-        <p class="route-close reveal">两条路径都必须提升人员能力，并建立清晰的推进路径：责任要明确，交付要可验证，生产边界要守住。</p>
+        <p class="route-close reveal">Path A 先补各岗位能力，把效能提上来，再支撑创新。Path B 用小团队全栈试点新项目，但现有排期可能抽不出人手。Path C 要按业务域重组，当前业务边界和人员能力都还不适配。</p>
       </div>
     </section><!-- paths-legacy -->
     <section id="compare">
       <div class="wrap section-content">
-        <h2 class="section-title reveal">四、现阶段结论<br><em>条件未成熟，先走 Path B</em></h2>
+        <h2 class="section-title reveal">四、现阶段结论<br><em>先做 A，B 和 C是能力成熟后的变革路径</em></h2>
         <div class="cmp-board reveal">
           <div class="fit">
-            <div class="fit-head"><span>目标</span><span>PATH A</span><span>PATH B</span></div>
+            <div class="fit-head"><span>目标</span><span>PATH A</span><span>PATH B</span><span>PATH C</span></div>
             <article>
-              <div class="fit-goal"><strong>优先维稳现有业务</strong></div>
-              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>重组会抽走守盘的人</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>技术继续守存量</p>
+              <div class="fit-goal"><strong>优先稳住现有业务</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>现有业务稳定，边补岗位能力</p>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>存量继续有人守，组织归属先不动</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>按业务域重组，守盘的人要动</p>
             </article>
             <article>
-              <div class="fit-goal"><strong>业务边界和工程是否成熟</strong></div>
-              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>需要边界清晰，各业务域工作量稳定，已有成熟基础和通用模块</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>存量业务系统较多，业务线较多，无法完全按业务域划分</p>
+              <div class="fit-goal"><strong>人才能力和人手</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>本岗位先补，不要求立刻跨端</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>很可能抽不出人手，试点门槛高</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>人才能力需很全面，两种转法要求都高</p>
             </article>
             <article>
-              <div class="fit-goal"><strong>现有人员接得住</strong></div>
-              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>要全员跨端，抽不出整队</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>产品牵头，AI 和一名技术全栈</p>
+              <div class="fit-goal"><strong>业务边界和工程</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>不拆业务域，继续负责全业务域</p>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>新业务域由小团队全负责，旧业务域由维稳团队负责</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>按域重组，需边界清晰、系统工程成熟</p>
             </article>
             <article>
-              <div class="fit-goal"><strong>全栈招得来、养得起</strong></div>
-              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>难招，成本高，周期长</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>不靠一次性招全员全栈</p>
+              <div class="fit-goal"><strong>组织改动幅度</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>组织不动或组织小动</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>组织小动</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>组织大改，职能变业务域</p>
             </article>
             <article>
-              <div class="fit-goal"><strong>不大动干戈</strong></div>
-              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>归属和分工都要改</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>先让小部分人员试点，小改流程，组织先不动</p>
+              <div class="fit-goal"><strong>提效速度</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>中等，很难同步拉齐所有能力</p>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>中等</p>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>较快</p>
             </article>
             <article>
-              <div class="fit-goal"><strong>提效和创新</strong></div>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>终极目标可以，但风险大、成本高</p>
-              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>终极目标实现周期稍长，但风险小、成本低</p>
+              <div class="fit-goal"><strong>提效成本</strong></div>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>成本低，内部提升（提升不了需替换）</p>
+              <p class="fit-cell is-on"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7"/></svg></i>成本中，小团队高能力者需补齐</p>
+              <p class="fit-cell"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></i>成本高，重组并转全栈或外聘全栈人员</p>
             </article>
           </div>
         </div>
-        <p class="cmp-close reveal">条件尚未成熟，目前先走 <b>Path B</b>：守住现有业务，用现有人员小范围验证。Path A 留到人员、边界和工程成熟之后，全栈不靠市场一次性补齐。</p>
-      </div>
-    </section>
-    <section id="action">
-      <div class="wrap section-content">
-        <h2 class="section-title reveal">五、试点安排<br><em>试点小项目，验证 Plan B 能否补上缺口。</em></h2>
-        <ol class="plan-rail">
-          <li class="plan-stop reveal">
-            <span class="plan-tag">人员和时间是否匹配</span>
-            <div class="plan-copy">
-              <h3>盘点目标与路径</h3>
-              <p>确认这一步走 Path B：产品牵头，AI 参与，技术守住存量。指定一名连接业务、产品、AI 和技术的负责人，盘点谁能参加、每人能投入多少时间，并写明哪块存量工作让出来。有合适的技术人员再加入全栈，没有也能启动。</p>
-            </div>
-          </li>
-          <li class="plan-stop reveal">
-            <span class="plan-tag">场景与标准是否成立</span>
-            <div class="plan-copy">
-              <h3>选定场景与验收标准</h3>
-              <p>挖掘落地点，选定场景，比如销售辅助、唐老师的 IP 分身陪伴、用户长期偏好推荐、临时场景内容推荐等场景。同时定下基线和验收标准，看用户有没有用、业务有没有变好。样本不够时只报告阶段结果。</p>
-            </div>
-          </li>
-          <li class="plan-stop reveal">
-            <span class="plan-tag">是否进入真实使用</span>
-            <div class="plan-copy">
-              <h3>完成首次 PoC / MVP</h3>
-              <p>产品写清用户、入口、规则、异常、验收和埋点。产品和 AI 先完成首次 PoC 和 MVP，这一阶段不对接核心系统。PoC 验证技术或能力是否可行，MVP 验证真实用户是否使用并获得价值。技术按接入范围做评审、接口、权限、测试和回退。</p>
-            </div>
-          </li>
-          <li class="plan-stop reveal">
-            <span class="plan-tag">继续、调整或停止</span>
-            <div class="plan-copy">
-              <h3>持续使用与复盘</h3>
-              <p>在真实使用中验证业务结果、完整成本、维护负担和可复用的方法。每一轮都要得出继续、调整或停止。</p>
-            </div>
-          </li>
-          <li class="plan-stop reveal">
-            <span class="plan-tag">是否形成固定机制</span>
-            <div class="plan-copy">
-              <h3>复制相邻场景</h3>
-              <p>跑通并经批准后，把同一套协作方法复制到相邻场景。人员、边界和工程成熟之后，再讨论是否走向 Path A。</p>
-            </div>
-          </li>
-        </ol>
+        <p class="cmp-close reveal"><b>Path A</b> 先补岗位能力，成本低，现有业务保持稳定。<b>Path B</b> 和 <b>Path C</b> 是能力成熟之后的变革路径：B 再抽小团队验证，C 再按业务域重组。</p>
       </div>
     </section>
   </main>
@@ -6681,9 +7413,8 @@
       const sectionMeta = {
         objective: ['01', '目标与推进顺序'],
         gaps: ['02', '缺口识别'],
-        paths: ['03', '两条组织路径'],
-        compare: ['04', '现阶段结论'],
-        action: ['05', '试点安排']
+        paths: ['03', '变革解决方案'],
+        compare: ['04', '现阶段结论']
       };
       Object.entries(sectionMeta).forEach(([id, meta]) => {
         const section = qs(`#${id}`);
@@ -6691,7 +7422,7 @@
         if (index) index.innerHTML = `<b>${meta[0]}</b>${meta[1]}`;
       });
       const pathTitle = qs('#paths .section-title');
-      if (pathTitle) pathTitle.innerHTML = '三、两条组织路径<br><em>Path A 改组织归属<span class="em-split">Path B 改创新流程</span></em>';
+      if (pathTitle) pathTitle.innerHTML = '三、变革解决方案<br><em>三条路径循序渐进：先补能力缺口，成熟后再试点和重组</em>';
       const progress = qs('#progress');
       const onScroll = () => { const h = document.documentElement.scrollHeight - innerHeight; progress.style.width = `${h > 0 ? scrollY / h * 100 : 0}%`; };
       addEventListener('scroll', onScroll, { passive: true }); onScroll();
@@ -6700,6 +7431,55 @@
       else { const io = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } }), { threshold: .14 }); reveal.filter(el => !el.closest('.hero')).forEach(el => io.observe(el)); }
       if (!reduce) qsa('.hero .reveal').forEach((el, index) => { el.style.transitionDelay = `${index * 140}ms`; requestAnimationFrame(() => el.classList.add('is-visible')); });
       qs('#printBtn').addEventListener('click', () => print());
+      /* 三条实线：左右从标题侧边连到圆弧，下方从标题顶边向上连到圆底 */
+      const drawOrbit = () => {
+        const orbit = qs('.orbit');
+        const wires = qs('.orbit-wires', orbit);
+        if (!orbit || !wires) return;
+        wires.replaceChildren();
+        if (matchMedia('(max-width: 980px)').matches) return;
+        const ob = orbit.getBoundingClientRect();
+        if (ob.width < 20) return;
+        wires.setAttribute('viewBox', `0 0 ${ob.width} ${ob.height}`);
+        [
+          ['.n1 h4', '[data-dot="1"]', 'right'],
+          ['.n2 h4', '[data-dot="2"]', 'top'],
+          ['.n3 h4', '[data-dot="3"]', 'left']
+        ].forEach(([pillSel, dotSel, side]) => {
+          const pill = qs(pillSel, orbit);
+          const dot = qs(dotSel, orbit);
+          if (!pill || !dot) return;
+          const pr = pill.getBoundingClientRect();
+          const dr = dot.getBoundingClientRect();
+          const x3 = dr.left + dr.width / 2 - ob.left;
+          const y3 = dr.top + dr.height / 2 - ob.top;
+          let points;
+          if (side === 'top') {
+            const x1 = pr.left + pr.width / 2 - ob.left;
+            const y1 = pr.top - ob.top;
+            const span = Math.abs(y3 - y1);
+            const y2 = y1 - Math.max(16, span * 0.55);
+            points = `${x1},${y1} ${x1},${y2} ${x3},${y3}`;
+          } else {
+            const x1 = (side === 'right' ? pr.right : pr.left) - ob.left;
+            const y1 = pr.top + pr.height / 2 - ob.top;
+            const span = Math.abs(x3 - x1);
+            const x2 = side === 'right' ? x1 + Math.max(28, span * 0.72) : x1 - Math.max(28, span * 0.72);
+            points = `${x1},${y1} ${x2},${y1} ${x3},${y3}`;
+          }
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+          line.setAttribute('points', points);
+          line.setAttribute('fill', 'none');
+          line.setAttribute('stroke', '#c5c6d0');
+          line.setAttribute('stroke-width', '1.4');
+          line.setAttribute('stroke-linecap', 'round');
+          line.setAttribute('stroke-linejoin', 'round');
+          wires.appendChild(line);
+        });
+      };
+      drawOrbit();
+      addEventListener('resize', drawOrbit);
+      document.fonts.ready.then(drawOrbit);
       const links = qsa('nav a'); const sections = qsa('main section[id]'); const sectionIO = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id)); } }), { rootMargin: '-35% 0px -55% 0px' }); sections.forEach(s => sectionIO.observe(s));
     })();
   </script>
