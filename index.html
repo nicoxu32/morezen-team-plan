@@ -4589,16 +4589,24 @@
       line-height: 1;
     }
 
-    /* 线段只连到下一张卡的序号，最后一张不再往下延 */
+    /* 线段只连到下一张卡的序号，末端加向下箭头，表示 1 → 2 → 3；最后一张不再往下延 */
     .route-a::after,
     .route-b::after {
       content: "";
       position: absolute;
       z-index: 0;
-      left: calc((var(--node) + var(--gutter)) * -1 + var(--node) / 2 - 1px);
-      top: calc(var(--node-top) + var(--node));
-      bottom: calc((var(--route-gap) + var(--node-top)) * -1);
-      border-left: 2px dashed rgba(89, 39, 219, .42);
+      /* 加宽到箭头宽度，虚线仍画在序号正中 */
+      left: calc((var(--node) + var(--gutter)) * -1 + var(--node) / 2 - 6px);
+      top: calc(var(--node-top) + var(--node) + 4px);
+      /* 箭头尖停在下一枚序号上沿，留出 2px 间隙 */
+      bottom: calc((var(--route-gap) + var(--node-top)) * -1 + 2px);
+      width: 12px;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1.2 1.2 L6 6.4 L10.8 1.2' fill='none' stroke='%235927DB' stroke-opacity='0.72' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+        repeating-linear-gradient(to bottom, rgba(89, 39, 219, .42) 0 6px, transparent 6px 11px);
+      background-repeat: no-repeat, no-repeat;
+      background-position: center bottom, center top;
+      background-size: 12px 8px, 2px calc(100% - 12px);
       pointer-events: none;
     }
 
@@ -7302,7 +7310,7 @@
             </section>
           </article>
           <article class="route-c" id="pathC">
-          <h3 class="route-name">PATH C：组织模式大升级，打破职能墙，按业务域组建全栈团队</h3>
+          <h3 class="route-name">PATH C：组织模式大变革，打破职能墙，按业务域组建全栈团队</h3>
           <div class="route-c-split">
           <div class="domain-arch" aria-label="研发人做业务线，但归职能部门技术负责人管；研发人归业务负责人管，可由技术负责人担任，并转全栈开发">
             <section class="is-dept">
